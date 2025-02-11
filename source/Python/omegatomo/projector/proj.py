@@ -2028,7 +2028,7 @@ class projectorClass:
             elif self.FPType == 4:
                 if self.useCUDA:
                     if self.useCuPy:
-                        bOptFP += ('-DPTYPE4=',)
+                        bOptFP += ('-DPTYPE4',)
                         bOptFP += ('-DNVOXELS=' + str(self.NVOXELS),)
                     else:
                         bOptFP.append('-DPTYPE4')
