@@ -479,7 +479,7 @@ def sinogramCoordinates2D(options, x, y, nLayers = 1):
     b = j + det_w_pseudo // 2;
     
     # Distance
-    i = np.abs(xa - ya - det_w_pseudo // 2);
+    i = np.abs(xa - ya - (det_w_pseudo // 2));
     for kk in range(len(ya)):
         if (ya[kk] < j[kk]) or (b[kk] < xa[kk]):
             i[kk] = -i[kk]
@@ -503,7 +503,7 @@ def sinogramCoordinates2D(options, x, y, nLayers = 1):
     #     swap2 = triu(temppi2);
     #     swap4 = tril(temppi2);
     #     varargout{6} = cat(3, swap1, swap2, swap3, swap4);
-    swap = np.logical_or((j * 2) < -i, i <= ((j - det_w_pseudo // 2) * 2))
+    swap = np.logical_or((j * 2) < -i, i <= ((j - (det_w_pseudo // 2)) * 2))
     L3 = L[swap,0]
     L[swap,0] = L[swap,1]
     L[swap,1] = L3
@@ -511,9 +511,9 @@ def sinogramCoordinates2D(options, x, y, nLayers = 1):
     # Determine the accepted LORs (distances that are within the predefined
     # value)
     if Ndist % 2 == 0:
-        accepted_lors = np.logical_and(i <= (Ndist//2 + min(0,options.ndist_side)), i >= (-Ndist//2 + max(0,options.ndist_side)))
+        accepted_lors = np.logical_and(i <= (Ndist//2 + min(0,options.ndist_side)), i >= (-(Ndist//2) + max(0,options.ndist_side)))
     else:
-        accepted_lors = np.logical_and(i <= Ndist//2, i >= (-Ndist//2))
+        accepted_lors = np.logical_and(i <= Ndist//2, i >= (-(Ndist//2)))
     
     j = j // (det_w_pseudo // 2 // Nang)
     
