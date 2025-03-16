@@ -11,5 +11,6 @@ from .coordinates import computeVoxelVolumes
 from .coordinates import computeProjectorScalingValues
 from .indices import indexMaker
 from .indices import formSubsetIndices
+from .indices import indexMakerSinoMuMap 
 
 __all__ = ["projectorClass", "computePixelSize", "computePixelCenters", "computeVoxelVolumes", "computeProjectorScalingValues", "indexMaker", "formSubsetIndices"]

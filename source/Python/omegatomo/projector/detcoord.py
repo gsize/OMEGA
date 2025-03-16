@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from omegatomo import proj
+#from omegatomo.projector import proj_PET
 from typing import Tuple
 
 def CTDetSource(options):
@@ -207,47 +207,6 @@ def getCoordinates(options):
             x = np.asfortranarray(np.vstack((x, y)))
     return x, y, z
     
-def getCoordinatesSPECT(options: proj.projectorClass) -> Tuple[np.ndarray, np.ndarray]:
-    n1: int = len(options.angles)
-    n2: int = len(options.radiusPerProj)
-    n3: int = len(options.swivelAngles)
-    assert (n1 == n2) and (n2 == n3), "The amount of angles, radii and swivel angles have to be equal."
-    
-    nProjections: int = n1
-    
-    x: np.ndarray = np.zeros((6, nProjections), dtype=np.float32)
-    z: np.ndarray = np.zeros((2, nProjections), dtype=np.float32)
-    
-    for ii in range(nProjections):
-        r1: float = options.radiusPerProj[ii]
-        r2: float = options.CORtoDetectorSurface
-        
-        alpha1: float = options.angles[ii]
-        alpha3: float = options.swivelAngles[ii]
-        
-        x[3, ii] = r1 * np.cos(np.deg2rad(alpha1)) + r2 * np.cos(np.deg2rad(alpha3))
-        x[4, ii] = r1 * np.sin(np.deg2rad(alpha1)) + r2 * np.sin(np.deg2rad(alpha3))
-        x[5, ii] = 0
-        
-        x[0, ii] = x[3, ii] + options.colL * np.cos(np.deg2rad(alpha3))
-        x[1, ii] = x[4, ii] + options.colL * np.sin(np.deg2rad(alpha3))
-        x[2, ii] = 0
-        
-        z[0, ii] = options.crXY * np.cos(np.deg2rad(alpha3 + 90))
-        z[1, ii] = options.crXY * np.sin(np.deg2rad(alpha3 + 90))
-    
-    if options.flipImageX:
-        x[0, :] = -x[0, :]
-        x[3, :] = -x[3, :]
-        z[0, :] = -z[0, :]
-    
-    if options.flipImageY:
-        x[1, :] = -x[1, :]
-        x[4, :] = -x[4, :]
-        z[1, :] = -z[1, :]
-    #return x, z
-    return np.asfortranarray(x), np.asfortranarray(z)
-    
 def detectorCoordinates(options):
     cr_p = options.cr_p
     diameter = options.diameter
@@ -446,8 +405,8 @@ def formDetectorIndices( det_w_pseudo, nLayers = 1, crystN = 0):
         L = L[~np.isin(L[:, 0], temp)]
         L = L[~np.isin(L[:, 1], temp)]
     return L
-        
-def sinogramCoordinates2D(options, x, y, nLayers = 1):
+
+def sinogramIndex2D(options, nLayers = 1):
     det_w_pseudo = options.det_w_pseudo
     Nang = options.Nang
     Ndist = options.Ndist
@@ -485,24 +444,6 @@ def sinogramCoordinates2D(options, x, y, nLayers = 1):
             i[kk] = -i[kk]
     
     # The sinogram corners need to the swapped
-    
-    # if nargout >= 6
-    #     temppi = j*2 < -i;
-    #     temppi2 = (i <= (j-det_w_pseudo/2)*2);
-        
-    #     temppi3 = false(det_w_pseudo);
-    #     temppi3(tril(true(det_w_pseudo))) = temppi;
-    #     temppi = logical(temppi3 + tril(temppi3,-1)');
-        
-    #     temppi3 = false(det_w_pseudo);
-    #     temppi3(tril(true(det_w_pseudo))) = temppi2;
-    #     temppi2 = logical(temppi3 + tril(temppi3,-1)');
-        
-    #     swap1 = triu(temppi);
-    #     swap3 = tril(temppi);
-    #     swap2 = triu(temppi2);
-    #     swap4 = tril(temppi2);
-    #     varargout{6} = cat(3, swap1, swap2, swap3, swap4);
     swap = np.logical_or((j * 2) < -i, i <= ((j - (det_w_pseudo // 2)) * 2))
     L3 = L[swap,0]
     L[swap,0] = L[swap,1]
@@ -523,6 +464,28 @@ def sinogramCoordinates2D(options, x, y, nLayers = 1):
         i = i + np.abs(np.min(i))
     
     L = L[accepted_lors,:]
+
+    return i,j,L
+
+def mapIndexLORZ(rings):
+    indexLORZ2DetZ=[]
+    indexDetZ2LORZ = np.zeros(rings*rings,dtype=np.int32)
+    offset =0 
+    for izDiff in range(rings):
+        s = np.arange(rings-izDiff,dtype = np.int32)
+        e = s+izDiff
+        indexLORZ2DetZ.append((s+e*rings))
+        indexDetZ2LORZ[s+e*rings] = np.arange(s.size,dtype=np.int32)+offset
+        offset += s.size
+        if izDiff>0:
+            indexLORZ2DetZ.append((e+s*rings))
+            indexDetZ2LORZ[e+s*rings] = np.arange(s.size,dtype=np.int32)+offset
+            offset += s.size
+    indexLORZ2DetZ = np.concatenate(indexLORZ2DetZ)
+    return indexLORZ2DetZ, indexDetZ2LORZ
+        
+def sinogramCoordinates2D(options, x, y, nLayers = 1):
+    i,j,L = sinogramIndex2D(options, nLayers)
     
     xx1 = x[L[:,0]]
     yy1 = y[L[:,0]]
@@ -530,7 +493,9 @@ def sinogramCoordinates2D(options, x, y, nLayers = 1):
     yy2 = y[L[:,1]]
     
     ##
-    
+    mashing = 1
+    Nang = options.Nang
+    Ndist = options.Ndist
     x = np.zeros((Ndist, Nang),dtype=np.float32,order='F')
     y = np.zeros((Ndist, Nang),dtype=np.float32,order='F')
     x2 = np.zeros((Ndist, Nang),dtype=np.float32,order='F')

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+
+from .detcoord import sinogramIndex2D,mapIndexLORZ
    
 def indexMaker(options):
     subsets = options.subsets;
@@ -239,4 +241,33 @@ def formSubsetIndices(options):
         options.z_index = np.empty(0, dtype=np.uint16)
     if options.sampling > 1 and not options.use_raw_data and not options.precompute_lor:
         options.Ndist = options.Ndist / options.sampling;
-        
+
+def indexMakerSinoMuMap(options):
+    print("indexMakerSinoMuMap")
+    nSubset = options.subsets
+    rings = options.rings
+    Ndist = options.Ndist
+    Nang = options.Nang
+    nDetctorPerRing = options.det_per_ring
+    NSinos = rings*rings
+    nNangPerSubset = Nang//nSubset
+
+    distIndex,angIndex,detXYIndex = sinogramIndex2D(options,1)
+    sino2DIndex = angIndex*Ndist +distIndex
+    indexSort = np.argsort(sino2DIndex)
+
+    txDet = detXYIndex[:,0]+detXYIndex[:,1]*nDetctorPerRing
+    txDet = txDet[indexSort]
+    txDet = txDet.repeat(NSinos)
+    options.trIndex = np.array((txDet %nDetctorPerRing,txDet //nDetctorPerRing, )).reshape(2,-1).astype(np.uint16)
+
+    IndexDetZ2LORZ,IndexLORZ2DetZ = mapIndexLORZ(rings)
+    axDet = np.tile(IndexDetZ2LORZ,Nang*Ndist)
+    options.axIndex = np.array((axDet%rings,axDet//rings)).astype(np.uint16)
+    countsPerSubset = np.array([NSinos*Ndist*nNangPerSubset,],dtype=np.int32)
+    options.nMeasSubset = np.tile(countsPerSubset,nSubset)
+    options.nMeas = np.cumsum(options.nMeasSubset)
+    options.nMeas = np.insert(options.nMeas,0,0)
+    options.index = np.arange(Nang*Ndist*NSinos,dtype= np.int32)
+    options.nMeas.tofile("nMeas.raw")
+

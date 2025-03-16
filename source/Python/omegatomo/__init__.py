@@ -35,7 +35,7 @@ Created on Wed Mar  6 16:58:41 2024
 # except ModuleNotFoundError:
 #     print('ArrayFire package not found! ArrayFire features are not supported. You can install ArrayFire package with "pip install arrayfire".')
 
-from .projector import proj
+from .projector import proj_PET
 
 
     
