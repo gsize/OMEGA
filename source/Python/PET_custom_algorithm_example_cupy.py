@@ -41,16 +41,16 @@ options.blocks_per_ring = (32)
 ### scanner/crystal rings) 
 # Multiplying this with the below cryst_per_block should equal the total
 # number of crystal rings. options.
-options.linear_multip = (4)
+options.linear_multip = (6)
 
 ### R-sectors/modules/blocks/buckets in transaxial direction
 # Required only if larger than 1
-options.transaxial_multip = 1
+options.transaxial_multip = 2
 
 ### Number of detectors on the side of R-sector/block/module (transaxial
 ### direction)
 # (e.g. 13 if 13x13, 20 if 20x10)
-options.cryst_per_block = (16)
+options.cryst_per_block = (8)
 
 ### Number of detectors on the side of R-sector/block/module (axial
 ### direction)
@@ -64,7 +64,7 @@ options.cr_p = 4.2
 options.cr_pz = 4.2
 
 ### Ring diameter (distance between perpendicular detectors) (mm)
-options.diameter = 720
+options.diameter = 718
 
 ### Number of pseudo rings between physical rings (use 0 or [] if none)
 options.pseudot = 0
@@ -76,7 +76,7 @@ options.det_per_ring = options.blocks_per_ring * options.cryst_per_block * optio
 # If your scanner has a single pseudo detector on each (transaxial) side of
 # the crystal block then simply add +1 inside the parenthesis (or uncomment
 # the one below).
-options.det_w_pseudo = options.blocks_per_ring*(options.cryst_per_block)
+options.det_w_pseudo = options.det_per_ring
 #options.det_w_pseudo = options.blocks_per_ring*(options.cryst_per_block + 1)
 
 ### Number of crystal rings
@@ -164,7 +164,7 @@ options.ring_difference = options.rings - 1
 # You should primarily use the same number as the device uses.
 # However, if that information is not available you can use ndist_max
 # function to determine potential values (see help ndist_max for usage).
-options.Ndist = 257
+options.Ndist = 273
 
 ### Number of angles (tangential positions) in sinogram 
 # This is the final amount after possible mashing, maximum allowed is the
@@ -329,7 +329,8 @@ y=x
 z=np.linspace(-(nZ-1)*imgPixelSize/2,(nZ-1)*imgPixelSize/2,nZ)
 X,Y,Z = np.meshgrid(x,y,z,indexing="ij")
 muMap = np.zeros((nX,nY,nZ),dtype = np.float32)
-muMap[(X-60)**2+(Y-80)**2<=125**2] =1.0
+#muMap[(X-60)**2+(Y-80)**2<=125**2] =1.0
+muMap[(X)**2+(Y)**2<=249**2] =1.0
 
 d_f = cp.asarray(muMap,dtype = cp.float32 ).ravel("F")
 
@@ -341,9 +342,10 @@ detX,detY =detectorCoordinates(options)
 options.x = np.asfortranarray(np.vstack((detX,detY )))
 z_length = float(options.rings) * options.cr_pz
 options.z = np.linspace(-(z_length / 2 - options.cr_pz / 2), z_length / 2 - options.cr_pz / 2, options.rings,dtype=np.float32)
+#plt.figure();plt.scatter(detX,detY)
 
 indexMakerSinoMuMap(options)
-options.projector_type =2
+options.projector_type =3
 options.addProjector()
 options.initProj()
 
@@ -357,17 +359,21 @@ for k in range(options.subsets):
 
     att = options.forwardProject(d_f, k)
     mask  = np.isnan(att)
-    att[mask]=0.0
+    #att[mask]=0.0
     attSino.append(cp.asnumpy(att))
 attSino = np.array(attSino).reshape(-1,options.Ndist,options.NSinos, order = 'C')
-attSino.tofile(f"attSino_proj{options.projector_type}.raw")
-#plt.imshow(attSino.sum(axis=0))
-#plt.colorbar()
+attSino = np.transpose(attSino,(2,0,1))
+attSino.tofile(f"attSino_proj{options.projector_type}_Ndist{options.Nang}_Ndist{options.Ndist}_1.raw")
 
-plt.figure();
-plt.imshow(attSino[120],vmin=50,vmax=250);plt.colorbar()
-plt.xlim(800,1024)
+plt.figure()
+plt.imshow(attSino[-1])
+plt.colorbar()
+
+#plt.figure();
+#plt.imshow(attSino[120],vmin=50,vmax=250);plt.colorbar()
+#plt.xlim(800,1024)
 #plt.ylim(0,50)
+plt.show()
 
 """
 OSEM
