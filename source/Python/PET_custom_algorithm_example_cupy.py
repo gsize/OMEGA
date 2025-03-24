@@ -330,7 +330,7 @@ z=np.linspace(-(nZ-1)*imgPixelSize/2,(nZ-1)*imgPixelSize/2,nZ)
 X,Y,Z = np.meshgrid(x,y,z,indexing="ij")
 muMap = np.zeros((nX,nY,nZ),dtype = np.float32)
 #muMap[(X-60)**2+(Y-80)**2<=125**2] =1.0
-muMap[(X)**2+(Y)**2<=249**2] =1.0
+muMap[(X)**2+(Y)**2<=(536/2.0)**2] =1.0
 
 d_f = cp.asarray(muMap,dtype = cp.float32 ).ravel("F")
 
@@ -345,7 +345,7 @@ options.z = np.linspace(-(z_length / 2 - options.cr_pz / 2), z_length / 2 - opti
 #plt.figure();plt.scatter(detX,detY)
 
 indexMakerSinoMuMap(options)
-options.projector_type =3
+options.projector_type =2
 options.addProjector()
 options.initProj()
 
@@ -366,8 +366,18 @@ attSino = np.transpose(attSino,(2,0,1))
 attSino.tofile(f"attSino_proj{options.projector_type}_Ndist{options.Nang}_Ndist{options.Ndist}_1.raw")
 
 plt.figure()
-plt.imshow(attSino[-1])
-plt.colorbar()
+plt.subplot(2,2,1)
+plt.imshow(attSino[0]);plt.colorbar()
+plt.title("sino_0")
+plt.subplot(2,2,2)
+plt.imshow(attSino[1]);plt.colorbar()
+plt.title("sino_1")
+plt.subplot(2,2,3)
+plt.imshow(attSino[-2]);plt.colorbar()
+plt.title("sino_-2")
+plt.subplot(2,2,4)
+plt.imshow(attSino[-1]);plt.colorbar()
+plt.title("sino_-1")
 
 #plt.figure();
 #plt.imshow(attSino[120],vmin=50,vmax=250);plt.colorbar()
