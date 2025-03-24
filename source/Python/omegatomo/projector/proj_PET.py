@@ -1363,6 +1363,8 @@ class projectorClass:
                 bOpt += ('-DN_RAYS=' + str(self.n_rays_transaxial * self.n_rays_axial),)
                 bOpt += ('-DN_RAYS2D=' + str(self.n_rays_transaxial),)
                 bOpt += ('-DN_RAYS3D=' + str(self.n_rays_axial),)
+            if self.useTotLength:
+                bOpt += ('-DTOTLENGTH',)
             if self.pitch:
                 bOpt += ('-DPITCH',)
             if (((self.subsets > 1 and (self.subsetType == 3 or self.subsetType == 6 or self.subsetType == 7))) and not self.CT and not self.SPECT and not self.PET and self.listmode == 0):
