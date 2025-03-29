@@ -269,5 +269,5 @@ def indexMakerSinoMuMap(options):
     options.nMeas = np.cumsum(options.nMeasSubset)
     options.nMeas = np.insert(options.nMeas,0,0)
     options.index = np.arange(Nang*Ndist*NSinos,dtype= np.int32)
-    options.nMeas.tofile("nMeas.raw")
+    #options.nMeas.tofile("nMeas.raw")
 
