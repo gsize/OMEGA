@@ -41,7 +41,7 @@ options.blocks_per_ring = (32)
 ### scanner/crystal rings) 
 # Multiplying this with the below cryst_per_block should equal the total
 # number of crystal rings. options.
-options.linear_multip = (6)
+options.linear_multip = (4)
 
 ### R-sectors/modules/blocks/buckets in transaxial direction
 # Required only if larger than 1
@@ -345,45 +345,66 @@ options.z = np.linspace(-(z_length / 2 - options.cr_pz / 2), z_length / 2 - opti
 #plt.figure();plt.scatter(detX,detY)
 
 indexMakerSinoMuMap(options)
-options.projector_type =2
+options.projector_type =1
 options.addProjector()
 options.initProj()
 
-attSino =[]
-for k in range(options.subsets):
+#%% FP
+#attSino =[]
+#for k in range(options.subsets):
+#    #k=1
+#    print(k)
+#    options.subset =k 
+#    options.d_trIndex[0] = cp.asarray(options.trIndex[options.nMeas[k]*2:options.nMeas[k+1] *2])
+#    options.d_axIndex[0] = cp.asarray(options.axIndex[options.nMeas[k]*2:options.nMeas[k+1] *2])
+#
+#    att = options.forwardProject(d_f, k)
+#    mask  = np.isnan(att)
+#    #att[mask]=0.0
+#    attSino.append(cp.asnumpy(att))
+#attSino = np.array(attSino).reshape(-1,options.Ndist,options.NSinos, order = 'C')
+#attSino = np.transpose(attSino,(2,0,1))
+##attSino.tofile(f"attSino_proj{options.projector_type}_Ndist{options.Nang}_Ndist{options.Ndist}_1.raw")
+#
+#plt.figure()
+#plt.subplot(2,2,1)
+#plt.imshow(attSino[0]);plt.colorbar()
+#plt.title("sino_0")
+#plt.subplot(2,2,2)
+#plt.imshow(attSino[1]);plt.colorbar()
+#plt.title("sino_1")
+#plt.subplot(2,2,3)
+#plt.imshow(attSino[-2]);plt.colorbar()
+#plt.title("sino_-2")
+#plt.subplot(2,2,4)
+#plt.imshow(attSino[-1]);plt.colorbar()
+#plt.title("sino_-1")
+#plt.show()
+
+imgBPs =[]
+#for k in range(options.subsets):
+for k in range(1):
     #k=1
     print(k)
     options.subset =k 
     options.d_trIndex[0] = cp.asarray(options.trIndex[options.nMeas[k]*2:options.nMeas[k+1] *2])
     options.d_axIndex[0] = cp.asarray(options.axIndex[options.nMeas[k]*2:options.nMeas[k+1] *2])
 
-    att = options.forwardProject(d_f, k)
-    mask  = np.isnan(att)
-    #att[mask]=0.0
-    attSino.append(cp.asnumpy(att))
-attSino = np.array(attSino).reshape(-1,options.Ndist,options.NSinos, order = 'C')
-attSino = np.transpose(attSino,(2,0,1))
-attSino.tofile(f"attSino_proj{options.projector_type}_Ndist{options.Nang}_Ndist{options.Ndist}_1.raw")
+    d_meas = cp.ones(options.nMeas[k],dtype = np.float32)
+    imgBP = options.backwardProject(d_meas, k)
+    imgBPs.append(cp.asnumpy(imgBP))
+#imgBPs = np.array(imgBPs).reshape(-1,options.Nx,options.Ny,options.Nz, order = 'C')
+#imgBPs = np.transpose(imgBPs,(2,0,1))
 
 plt.figure()
 plt.subplot(2,2,1)
-plt.imshow(attSino[0]);plt.colorbar()
-plt.title("sino_0")
+plt.imshow(imgBPs[0][:,:,options.Nz//2]);plt.colorbar()
+plt.title("img_0")
 plt.subplot(2,2,2)
-plt.imshow(attSino[1]);plt.colorbar()
-plt.title("sino_1")
-plt.subplot(2,2,3)
-plt.imshow(attSino[-2]);plt.colorbar()
-plt.title("sino_-2")
-plt.subplot(2,2,4)
-plt.imshow(attSino[-1]);plt.colorbar()
-plt.title("sino_-1")
-
-#plt.figure();
-#plt.imshow(attSino[120],vmin=50,vmax=250);plt.colorbar()
-#plt.xlim(800,1024)
-#plt.ylim(0,50)
+plt.imshow(imgBPs[0][:,options.Ny//2,:]);plt.colorbar()
+plt.title("img_1")
 plt.show()
+
 
 """
 OSEM

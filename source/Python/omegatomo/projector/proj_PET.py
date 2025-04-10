@@ -1775,7 +1775,7 @@ class projectorClass:
                         elif self.FPType in [1, 2, 3]:
                             if (self.CT or self.PET or self.SPECT) and self.listmode == 0:
                                 kIndLoc += (cp.int64(self.nProjSubset[subset].item()),)
-                            if (((self.listmode == 0 and not self.CT) or self.useIndexBasedReconstruction)) or (not self.loadTOF and self.listmode > 0):
+                            if ((self.listmode == 0 and not self.CT) or self.useIndexBasedReconstruction) or (not self.loadTOF and self.listmode > 0):
                                 kIndLoc += (self.d_x[0],)
                             else:
                                 kIndLoc += (self.d_x[subset], )
@@ -1885,14 +1885,16 @@ class projectorClass:
                                 kIndLoc += (self.d_atten[subset],)
                             if (self.CT or self.PET or self.SPECT) and self.listmode == 0:
                                 kIndLoc += ((self.nProjSubset[subset].item()),)
-                            if ((self.listmode == 0 or self.useIndexBasedReconstruction) and not self.CT) or (not self.loadTOF and self.listmode > 0):
+                            if ((self.listmode == 0 and not self.CT) or self.useIndexBasedReconstruction)  or (not self.loadTOF and self.listmode > 0):
                                 kIndLoc += (self.d_x[0],)
+                                print("d_x0")
                             else:
                                 kIndLoc += (self.d_x[subset],)
                             if (self.CT or self.PET or (self.listmode > 0 and not self.useIndexBasedReconstruction)):
                                 kIndLoc += (self.d_z[subset],)
                             else:
                                 kIndLoc += (self.d_z[0],)
+                                print("d_z0")
                             if (self.normalization_correction):
                                 kIndLoc += (self.d_norm[subset],)
                             if (self.additionalCorrection):
@@ -1914,12 +1916,14 @@ class projectorClass:
                                 kIndLoc += (self.d_xyindex[subset],)
                                 kIndLoc += (self.d_zindex[subset],)
                             if self.useIndexBasedReconstruction and self.listmode > 0:
-                                if not self.loadTOF:
-                                    kIndLoc += (self.d_trIndex[0],)
-                                    kIndLoc += (self.d_axIndex[0],)
-                                else:
-                                    kIndLoc += (self.d_trIndex[subset],)
-                                    kIndLoc += (self.d_axIndex[subset],)
+                                kIndLoc += (self.d_trIndex[0],)
+                                kIndLoc += (self.d_axIndex[0],)
+                                #if not self.loadTOF:
+                                #    kIndLoc += (self.d_trIndex[0],)
+                                #    kIndLoc += (self.d_axIndex[0],)
+                                #else:
+                                #    kIndLoc += (self.d_trIndex[subset],)
+                                #    kIndLoc += (self.d_axIndex[subset],)
                             if self.useTorch:
                                 kIndLoc += (yD,)
                             else:
@@ -1934,70 +1938,6 @@ class projectorClass:
                             kIndLoc += (cp.uint8(self.no_norm),)
                             kIndLoc += (cp.uint64(self.nMeasSubset[subset].item()),)
                             kIndLoc += (cp.uint32(subset),)
-                            kIndLoc += (cp.int32(k),)
-                        else:
-                            if self.CT:
-                                pass
-                            else:
-                                kIndLoc += (cp.uint32(self.Nx[k].item()),)
-                                kIndLoc += (cp.uint32(self.Ny[k].item()),)
-                                kIndLoc += (cp.uint32(self.Nz[k].item()),)
-                                kIndLoc += (cp.float32(self.bx[k].item()),)
-                                kIndLoc += (cp.float32(self.by[k].item()),)
-                                kIndLoc += (cp.float32(self.bz[k].item()),)
-                                kIndLoc += (cp.float32(self.bx[k].item() + self.Nx[k].item() * self.dx[k].item()),)
-                                kIndLoc += (cp.float32(self.by[k].item() + self.Ny[k].item() * self.dy[k].item()),)
-                                kIndLoc += (cp.float32(self.bz[k].item() + self.Nz[k].item() * self.dz[k].item()),)
-                                kIndLoc += (cp.float32(self.dScaleX4[k].item()),)
-                                kIndLoc += (cp.float32(self.dScaleY4[k].item()),)
-                                kIndLoc += (cp.float32(self.dScaleZ4[k].item()),)
-                                if self.useImages:
-                                    chl = cp.cuda.texture.ChannelFormatDescriptor(32,0,0,0, cp.cuda.runtime.cudaChannelFormatKindFloat)
-                                    array = cp.cuda.texture.CUDAarray(chl, self.nRowsD, self.nColsD, self.nProjSubset[subset].item())
-                                    if self.useTorch:
-                                        array.copy_from(yD.reshape((self.nProjSubset[subset].item(), self.nColsD, self.nRowsD)))
-                                    else:
-                                        array.copy_from(y.reshape((self.nProjSubset[subset].item(), self.nColsD, self.nRowsD)))
-                                    res = cp.cuda.texture.ResourceDescriptor(cp.cuda.runtime.cudaResourceTypeArray, cuArr=array)
-                                    tdes= cp.cuda.texture.TextureDescriptor(addressModes=(cp.cuda.runtime.cudaAddressModeClamp, cp.cuda.runtime.cudaAddressModeClamp,cp.cuda.runtime.cudaAddressModeClamp), 
-                                                                            filterMode=cp.cuda.runtime.cudaFilterModeLinear, normalizedCoords=1)
-                                    yy = cp.cuda.texture.TextureObject(res, tdes)
-                                    kIndLoc += (yy,)
-                                else:
-                                    if self.useTorch:
-                                        kIndLoc += (yD,)
-                                    else:
-                                        kIndLoc += (y,)
-                                if self.useTorch:
-                                    kIndLoc += (fD,)
-                                else:
-                                    if isinstance(f, list):
-                                        kIndLoc += (f[k],)
-                                    else:
-                                        kIndLoc += (f,)
-                                if self.listmode == 0 and not self.CT:
-                                    kIndLoc += (self.d_x[0],)
-                                else:
-                                    kIndLoc += (self.d_x[subset],)
-                                if (self.CT or self.PET or self.listmode > 0):
-                                    kIndLoc += (self.d_z[subset],)
-                                else:
-                                    kIndLoc += (self.d_z[0],)
-                                kIndLoc += (cp.int64(self.nProjSubset[subset].item()),)
-                                if ((self.subsetType == 3 or self.subsetType == 6 or self.subsetType == 7) and self.subsets > 1 and self.listmode == 0):
-                                    kIndLoc += (self.d_xyindex[subset],)
-                                    kIndLoc += (self.d_zindex[subset],)
-                                if (self.normalization_correction):
-                                    kIndLoc += (self.d_norm[subset],)
-                                elif (self.additionalCorrection):
-                                    kIndLoc += (self.d_corr[subset],)
-                                kIndLoc += (self.d_Sens,)
-                            kIndLoc += (cp.uint8(self.no_norm),)
-                            if self.CT:
-                                kIndLoc += (cp.int64(self.nProjSubset[subset].item()),)
-                            else:
-                                kIndLoc += (cp.uint64(self.nMeasSubset[subset].item()),)
-                                kIndLoc += (cp.uint32(subset),)
                             kIndLoc += (cp.int32(k),)
                         self.knlB((self.globalSizeBP[subset][k][0] // self.localSizeBP[0], self.globalSizeBP[subset][k][1] // self.localSizeBP[1], self.globalSizeBP[subset][k][2]), (self.localSizeBP[0], self.localSizeBP[1], 1), kIndLoc)
                         cp.cuda.runtime.deviceSynchronize()
