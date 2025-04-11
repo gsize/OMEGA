@@ -345,7 +345,7 @@ options.z = np.linspace(-(z_length / 2 - options.cr_pz / 2), z_length / 2 - opti
 #plt.figure();plt.scatter(detX,detY)
 
 indexMakerSinoMuMap(options)
-options.projector_type =1
+options.projector_type =3
 options.addProjector()
 options.initProj()
 
@@ -382,28 +382,35 @@ options.initProj()
 #plt.show()
 
 imgBPs =[]
-#for k in range(options.subsets):
-for k in range(1):
-    #k=1
-    print(k)
+for k in range(options.subsets):
+#for k in range(2):
+    print(f"{k},",end="")
     options.subset =k 
     options.d_trIndex[0] = cp.asarray(options.trIndex[options.nMeas[k]*2:options.nMeas[k+1] *2])
     options.d_axIndex[0] = cp.asarray(options.axIndex[options.nMeas[k]*2:options.nMeas[k+1] *2])
 
-    d_meas = cp.ones(options.nMeas[k],dtype = np.float32)
+    d_meas = cp.ones(options.nMeasSubset[k],dtype = np.float32)
     imgBP = options.backwardProject(d_meas, k)
     imgBPs.append(cp.asnumpy(imgBP))
-#imgBPs = np.array(imgBPs).reshape(-1,options.Nx,options.Ny,options.Nz, order = 'C')
-#imgBPs = np.transpose(imgBPs,(2,0,1))
+print(f"end",end="\n")
+lenBP =len(imgBPs)
+Nx,Ny,Nz =  options.Nx[0].item(),options.Ny[0].item(),options.Nz[0].item()
+imgBPs = np.array(imgBPs).reshape(-1,Nx,Ny,Nz, order = 'F')
+imgBPs = np.transpose(imgBPs,(0,3,2,1))
+
+imgBPs.tofile(f"BP_proj{options.projector_type}_{lenBP}X{Nz}X{Ny}X{Nx}.raw")
 
 plt.figure()
-plt.subplot(2,2,1)
-plt.imshow(imgBPs[0][:,:,options.Nz//2]);plt.colorbar()
+plt.subplot(1,3,1)
+plt.imshow(imgBPs[0][:,:,Nx//2]);plt.colorbar()
 plt.title("img_0")
-plt.subplot(2,2,2)
-plt.imshow(imgBPs[0][:,options.Ny//2,:]);plt.colorbar()
+plt.subplot(1,3,2)
+plt.imshow(imgBPs[0][:,Ny//2,:]);plt.colorbar()
 plt.title("img_1")
-plt.show()
+plt.subplot(1,3,3)
+plt.imshow(imgBPs[0][Nz//2,:,:]);plt.colorbar()
+plt.title("img_3")
+#plt.show()
 
 
 """

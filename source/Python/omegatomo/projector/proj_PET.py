@@ -1887,14 +1887,12 @@ class projectorClass:
                                 kIndLoc += ((self.nProjSubset[subset].item()),)
                             if ((self.listmode == 0 and not self.CT) or self.useIndexBasedReconstruction)  or (not self.loadTOF and self.listmode > 0):
                                 kIndLoc += (self.d_x[0],)
-                                print("d_x0")
                             else:
                                 kIndLoc += (self.d_x[subset],)
                             if (self.CT or self.PET or (self.listmode > 0 and not self.useIndexBasedReconstruction)):
                                 kIndLoc += (self.d_z[subset],)
                             else:
                                 kIndLoc += (self.d_z[0],)
-                                print("d_z0")
                             if (self.normalization_correction):
                                 kIndLoc += (self.d_norm[subset],)
                             if (self.additionalCorrection):
